@@ -18,58 +18,106 @@
       
       <!-- Viewport for 3D view -->
       <div class="row">
-      <div class="col-sm-8 col-sm-push-4" style="margin-left: auto; margin-right: auto; ">
-          <div id="viewport">
-          </div>
+      
+      <div class="col-sm-7 col-sm-push-5" style="margin-left: auto; margin-right: auto; ">
+        <div id="viewport"></div>
+        <div style="margin:20px; text-align: right;">
+          <button class="btn btn-lg btn-default" id="btn-regenerate">
+            Regenerate
+            <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span>
+          </button>
+          <button class="btn btn-lg btn-success" id="btn-cut">
+            Cut
+            <span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+          </button>
+        </div>
       </div>
 
+
       <!-- Form for input -->
-        <div class="col-sm-4 col-sm-pull-8">
+        <div class="col-sm-5 col-sm-pull-7">
           <form class="form-horizontal" id="form-params">
             <div class="form-group">
               <label for="input-width" class="col-sm-6 control-label">Width</label>
               <div class="col-sm-6">
-                <input type="number" class="form-control" id="input-width" value="5">
+                <div class="input-group">
+                  <input class="form-control num-input" id="input-width" value="5">
+                  <span class="input-group-addon">in</span>
+                </div>
               </div>
             </div>
             <div class="form-group">
               <label for="input-height" class="col-sm-6 control-label">Height</label>
               <div class="col-sm-6">
-                <input type="number" class="form-control" id="input-height" value="5">
+                <div class="input-group">
+                  <input class="form-control num-input" id="input-height" value="5">
+                  <span class="input-group-addon">in</span>
+                </div>
               </div>
             </div>
             <div class="form-group">
               <label for="input-base-thickness" class="col-sm-6 control-label">Base Thickness</label>
               <div class="col-sm-6">
-                <input type="number" class="form-control" id="input-base_thickness" value="0.25">
+                <div class="input-group">
+                  <input class="form-control num-input" id="input-base_thickness" value="0.25">
+                  <span class="input-group-addon">in</span>
+                </div>
               </div>
             </div>
             <div class="form-group">
               <label for="input-material_thickness" class="col-sm-6 control-label">Material Thickness</label>
               <div class="col-sm-6">
-                <input type="number" class="form-control" id="input-material_thickness" value="0.25">
+                <div class="input-group">
+                  <input class="form-control num-input" id="input-material_thickness" value="0.75">
+                  <span class="input-group-addon">in</span>
+                </div>
               </div>
             </div>
             <div class="form-group">
               <label for="input-scale" class="col-sm-6 control-label">Terrain Scale</label>
               <div class="col-sm-6">
-                <input type="number" class="form-control" id="input-scale" value="1.0">
+                <input class="form-control num-input" id="input-scale" value="2.0">
               </div>
             </div>
             <div class="form-group">
               <label for="input-resolution" class="col-sm-6 control-label">Resolution</label>
               <div class="col-sm-6">
-                <input type="number" class="form-control" id="input-resolution" value="0.0625">
+                <div class="input-group">
+                  <input class="form-control num-input" id="input-resolution" value="0.0625">
+                  <span class="input-group-addon">in</span>
+                </div>
               </div>
             </div>
 
             <div class="form-group">
-              <div class="col-sm-12" style="text-align: right;">
-                <a class="btn btn-info" id="btn-regenerate">Regenerate Terrain</a>
+              <label for="input-resolution" class="col-sm-6 control-label">Feedrate</label>
+              <div class="col-sm-6">
+                <div class="input-group">
+                  <input class="form-control num-input" id="input-feedrate" value="1.0">
+                  <span class="input-group-addon">in/sec</span>
+                </div>
               </div>
-
             </div>
 
+            <div class="form-group">
+              <label for="input-resolution" class="col-sm-6 control-label">Pass Depth</label>
+              <div class="col-sm-6">
+                <div class="input-group">
+                  <input class="form-control num-input" id="input-pass_depth" value="0.125">
+                  <span class="input-group-addon">in/pass</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="input-resolution" class="col-sm-6 control-label">Safe Z Pullup</label>
+              <div class="col-sm-6">
+                <div class="input-group">
+                  <input class="form-control num-input" id="input-zpullup" value="0.25">
+                  <span class="input-group-addon">in</span>
+                </div>
+              </div>
+            </div>
           </form>
         </div>
       </div>
@@ -81,6 +129,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/terrain.js"></script>
+    <script src="js/dashboard.js"></script>
 
     <script> 
         var container = $('#viewport');
@@ -106,22 +155,41 @@
         $('#btn-regenerate').click(function(evt) {
           update();
         });
-        
-        function update() {
 
+        $('#btn-cut').click(function(evt) {
+          fabricate();
+        });
+
+        function getOptions() {
             // Extract options from the form
             var options = {}
             $('#form-params').find('input').each(function(){
               var id = this.id.replace(/input-/gi, '');
-              options[id] = this.value;
+              options[id] = Number(this.value);
             });
+            return options
+        }
 
+        function fabricate() {
+          var options = getOptions();
+          terrain.options(options);
+          var gcode = terrain.generateGCode();
+          var size = parseInt(options.width) + 'x' + parseInt(options.height) + 'x' + options.material_thickness.toFixed(3);
+          fabmoDashboard.submitJob(gcode, { filename : 'terrain_' + size + '.nc', 
+                                            name : 'Terrain ' + size,
+                                            description : size + ' terrain by Terrainman'
+                                          });
+        }
+
+        function update() {
+
+            var options = getOptions();
             // Update the terrain options
             terrain.options(options);
 
             // Create new scene elements
             var material = new THREE.MeshBasicMaterial( { color: 0x0000ff, wireframe:true } );
-            var new_element = new THREE.Mesh( terrain.generate(), material );
+            var new_element = new THREE.Mesh( terrain.generate3D(), material );
             
             // Update scene
             if(element) { scene.remove(element); }
@@ -131,6 +199,7 @@
             //element.rotation.y = 0.25;
 
             scene.add( new_element );
+            //console.log(terrain.generateGCode());
         }
 
         function render() {
