@@ -35,7 +35,10 @@ Terrain.prototype.options = function(options) {
 Terrain.prototype.generate3D = function(seed) {
 	seed = seed || Math.random();
 	noise.seed(seed);
-	var geometry = new THREE.PlaneGeometry( this.width, this.height, this.width/this.resolution, this.height/this.resolution );
+	var resolution = Math.min(this.width, this.height)/50.0;
+	var xres = Math.round(this.width/resolution)
+	var yres = Math.round(this.height/resolution)
+	var geometry = new THREE.PlaneGeometry( this.width, this.height, xres, yres );
 	var terrain_scale = 1.0/this.scale;
 	
 	//set height of plane vertices
@@ -66,12 +69,12 @@ Terrain.prototype.generateGCode = function(seed) {
 	var z = 0;
 	var dir = 1.0;
 	var pass = 0;
+
+	// Multi-pass the first row to get to the cutting depth required, but do subsequent rows (step-over) at full depth
 	while(do_another_pass) {
-		console.log('initial pass ' + pass)
 		do_another_pass = false;
 		current_pass_depth -= this.pass_depth;
 		while((dir > 0) ? x < this.width : x > 0) {
-			console.log('Moving x: ' + x)
 			var depth = -((this.cut_depth/2.0) + ((this.cut_depth/2.0)*noise.simplex2(scale*x, scale*y)));
 			if(current_pass_depth < depth) {
 				// If we bottom out, don't cut the pass depth, cut the actual contour of the terrain
@@ -83,15 +86,15 @@ Terrain.prototype.generateGCode = function(seed) {
 			}
 			gcodes.push(move(x,y,z,this.feedrate))
 			x += dir*res;
+			x = x > this.width ? this.width : x;
 		}
 		dir = -dir;
 		pass += 1;
 	}
 
+	// Start stepping over
 	y += res;
 
-//	gcodes.push('G0Z' + this.zpullup.toFixed(3));
-//	gcodes.push('G0X0Y0');
 	// Iterate over rows, then columns
 	while(y <this.height) {
 		while((dir > 0) ? x < this.width : x > 0) {

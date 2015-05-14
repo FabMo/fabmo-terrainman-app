@@ -41,7 +41,7 @@
               <label for="input-width" class="col-sm-6 control-label">Width</label>
               <div class="col-sm-6">
                 <div class="input-group">
-                  <input class="form-control num-input update" id="input-width" type="number" min="0.25" max="100.0" value="5">
+                  <input class="form-control num-input update" id="input-width" type="number" min="0.25" max="100.0" value="5" step="0.25">
                   <span class="input-group-addon">in</span>
                 </div>
               </div>
@@ -50,7 +50,7 @@
               <label for="input-height" class="col-sm-6 control-label">Height</label>
               <div class="col-sm-6">
                 <div class="input-group">
-                  <input class="form-control num-input update" id="input-height" type="number" min="0.25" max="100.0" value="5">
+                  <input class="form-control num-input update" id="input-height" type="number" min="0.25" max="100.0" value="5" step="0.25">
                   <span class="input-group-addon">in</span>
                 </div>
               </div>
@@ -59,7 +59,7 @@
               <label for="input-material_thickness" class="col-sm-6 control-label">Cut Depth</label>
               <div class="col-sm-6">
                 <div class="input-group">
-                  <input class="form-control num-input update" id="input-cut_depth" value="0.75" type="number" min="0.0625" max="10.0">
+                  <input class="form-control num-input update" id="input-cut_depth" value="0.75" step="0.05" type="number" min="0.0625" max="10.0">
                   <span class="input-group-addon">in</span>
                 </div>
               </div>
@@ -132,6 +132,8 @@
         var camera = new THREE.PerspectiveCamera( 75, container.width() / container.height(), 0.1, 1000 );
         var renderer = new THREE.WebGLRenderer({antialias: true});
 
+        var terrain_seed = Math.random();
+
         renderer.setClearColor( 0xffffff, 1 );
         renderer.setSize( container.width(), container.height() );
         container.append( renderer.domElement );
@@ -144,11 +146,12 @@
         });
 
         $('#btn-regenerate').click(function(evt) {
+          terrain_seed = Math.random();
           update();
         });
 
         $('#btn-cut').click(function(evt) {
-          fabricate();
+          fabricate(terrain_seed);
         });
 
         function getOptions() {
@@ -161,10 +164,10 @@
             return options
         }
 
-        function fabricate() {
+        function fabricate(seed) {
           var options = getOptions();
           terrain.options(options);
-          var gcode = terrain.generateGCode();
+          var gcode = terrain.generateGCode(seed);
           var size = parseInt(options.width) + 'x' + parseInt(options.height) + 'x' + options.cut_depth.toFixed(3);
           fabmoDashboard.submitJob(gcode, { filename : 'terrain_' + size + '.nc', 
                                             name : 'Terrain ' + size,
@@ -173,14 +176,14 @@
         }
 
         function update() {
-
+            
             var options = getOptions();
             // Update the terrain options
             terrain.options(options);
 
             // Create new scene elements
             var material = new THREE.MeshBasicMaterial( { color: 0x0000ff, wireframe:true } );
-            var new_element = new THREE.Mesh( terrain.generate3D(), material );
+            var new_element = new THREE.Mesh( terrain.generate3D(terrain_seed), material );
             
             // Update scene
             if(element) { scene.remove(element); }
