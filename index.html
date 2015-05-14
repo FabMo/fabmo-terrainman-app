@@ -22,8 +22,8 @@
       <div class="col-sm-7 col-sm-push-5" style="margin-left: auto; margin-right: auto; ">
         <div id="viewport"></div>
         <div style="margin:20px; text-align: right;">
-          <button class="btn btn-lg btn-default" id="btn-regenerate">
-            Regenerate
+          <button class="btn btn-lg btn-default" id="btn-randomize">
+            Randomize
             <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span>
           </button>
           <button class="btn btn-lg btn-success" id="btn-cut">
@@ -145,7 +145,7 @@
           update();
         });
 
-        $('#btn-regenerate').click(function(evt) {
+        $('#btn-randomize').click(function(evt) {
           terrain_seed = Math.random();
           update();
         });

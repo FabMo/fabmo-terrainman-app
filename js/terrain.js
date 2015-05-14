@@ -1,3 +1,5 @@
+var RESOLUTION_FACTOR = 50;
+
 var Terrain = function(element, options) {
 	this.element = element;
 	this.options(options);
@@ -35,7 +37,7 @@ Terrain.prototype.options = function(options) {
 Terrain.prototype.generate3D = function(seed) {
 	seed = seed || Math.random();
 	noise.seed(seed);
-	var resolution = Math.min(this.width, this.height)/50.0;
+	var resolution = Math.min(this.width, this.height)/RESOLUTION_FACTOR;
 	var xres = Math.round(this.width/resolution)
 	var yres = Math.round(this.height/resolution)
 	var geometry = new THREE.PlaneGeometry( this.width, this.height, xres, yres );
@@ -45,7 +47,7 @@ Terrain.prototype.generate3D = function(seed) {
 	for ( var i = 0; i<geometry.vertices.length; i++ ) {
 		var x = geometry.vertices[i].x;
 		var y = geometry.vertices[i].y;
-		var z = this.cut_depth*noise.simplex2(terrain_scale*x,terrain_scale*y);
+		var z = 0.5*this.cut_depth*noise.simplex2(terrain_scale*x,terrain_scale*y);
 		geometry.vertices[i].z = z;
 	}
 	return geometry
@@ -70,11 +72,16 @@ Terrain.prototype.generateGCode = function(seed) {
 	var dir = 1.0;
 	var pass = 0;
 
-	// Multi-pass the first row to get to the cutting depth required, but do subsequent rows (step-over) at full depth
+	// Multi-pass the first row to get to the cutting depth required.
+	// Each pass will cut at the pass depth or the desired depth of the contoured row, whichever is shallower,
+	// until the entire row has been contoured.  At that point it will proceed to cutting the rest of the raster, at full depth.
+	console.log("first pass")
 	while(do_another_pass) {
 		do_another_pass = false;
 		current_pass_depth -= this.pass_depth;
-		while((dir > 0) ? x < this.width : x > 0) {
+		// Iterate until the end of the row (or beginning depending on the direction)
+		while(true) {
+			// Compute the desired contour depth at this point
 			var depth = -((this.cut_depth/2.0) + ((this.cut_depth/2.0)*noise.simplex2(scale*x, scale*y)));
 			if(current_pass_depth < depth) {
 				// If we bottom out, don't cut the pass depth, cut the actual contour of the terrain
@@ -85,25 +92,31 @@ Terrain.prototype.generateGCode = function(seed) {
 				do_another_pass = true;
 			}
 			gcodes.push(move(x,y,z,this.feedrate))
-			x += dir*res;
-			x = x > this.width ? this.width : x;
+			if((dir > 0) ? x >= this.width : x <= 0) { break; }
+			x = dir > 0 ? Math.min(x+dir*res, this.width) : Math.max(x+dir*res, 0);
 		}
 		dir = -dir;
 		pass += 1;
 	}
-
 	// Start stepping over
 	y += res;
 
-	// Iterate over rows, then columns
-	while(y <this.height) {
-		while((dir > 0) ? x < this.width : x > 0) {
-			// Calculate the Z (contour) at this point
+	// Cutting in y-axis (rows) is monotonically increasing until the raster is complete
+	while(true) {
+		// Cutting in x-axis (columns) alternates direction row by row (like mowing a lawn)
+		while(true) {
+			// Calculate the Z (contour) at this x,y point
 			z = -((this.cut_depth/2.0) + ((this.cut_depth/2.0)*noise.simplex2(scale*x, scale*y)));
+			// Emit G-Code for current position
 			gcodes.push(move(x,y,z,this.feedrate))
-			x += dir*res;
+			if((dir > 0) ? x >= this.width : x <= 0) { break; }
+			// Move along X
+			x = (dir > 0) ? Math.min(x+(dir*res), this.width) : Math.max(x+(dir*res), 0);
 		}
-		y += res;
+		if(y >= this.height) {break;}
+		// Move along Y
+		y = Math.min(y+res, this.height);
+		// Alternate direction in X (lawnmower)
 		dir = -dir;
 	}
 
