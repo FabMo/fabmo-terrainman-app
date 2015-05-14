@@ -41,7 +41,7 @@
               <label for="input-width" class="col-sm-6 control-label">Width</label>
               <div class="col-sm-6">
                 <div class="input-group">
-                  <input class="form-control num-input" id="input-width" value="5">
+                  <input class="form-control num-input update" id="input-width" type="number" min="0.25" max="100.0" value="5">
                   <span class="input-group-addon">in</span>
                 </div>
               </div>
@@ -50,25 +50,16 @@
               <label for="input-height" class="col-sm-6 control-label">Height</label>
               <div class="col-sm-6">
                 <div class="input-group">
-                  <input class="form-control num-input" id="input-height" value="5">
+                  <input class="form-control num-input update" id="input-height" type="number" min="0.25" max="100.0" value="5">
                   <span class="input-group-addon">in</span>
                 </div>
               </div>
             </div>
             <div class="form-group">
-              <label for="input-base-thickness" class="col-sm-6 control-label">Base Thickness</label>
+              <label for="input-material_thickness" class="col-sm-6 control-label">Cut Depth</label>
               <div class="col-sm-6">
                 <div class="input-group">
-                  <input class="form-control num-input" id="input-base_thickness" value="0.25">
-                  <span class="input-group-addon">in</span>
-                </div>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="input-material_thickness" class="col-sm-6 control-label">Material Thickness</label>
-              <div class="col-sm-6">
-                <div class="input-group">
-                  <input class="form-control num-input" id="input-material_thickness" value="0.75">
+                  <input class="form-control num-input update" id="input-cut_depth" value="0.75" type="number" min="0.0625" max="10.0">
                   <span class="input-group-addon">in</span>
                 </div>
               </div>
@@ -76,14 +67,14 @@
             <div class="form-group">
               <label for="input-scale" class="col-sm-6 control-label">Terrain Scale</label>
               <div class="col-sm-6">
-                <input class="form-control num-input" id="input-scale" value="2.0">
+                <input class="form-control num-input update" id="input-scale" value="2.0" type="number" min="0.0001" max="1000.0">
               </div>
             </div>
             <div class="form-group">
               <label for="input-resolution" class="col-sm-6 control-label">Resolution</label>
               <div class="col-sm-6">
                 <div class="input-group">
-                  <input class="form-control num-input" id="input-resolution" value="0.0625">
+                  <input class="form-control num-input update" id="input-resolution" value="0.0625" type="number" min="0.0005" max="1.0">
                   <span class="input-group-addon">in</span>
                 </div>
               </div>
@@ -93,7 +84,7 @@
               <label for="input-resolution" class="col-sm-6 control-label">Feedrate</label>
               <div class="col-sm-6">
                 <div class="input-group">
-                  <input class="form-control num-input" id="input-feedrate" value="1.0">
+                  <input class="form-control num-input noupdate" id="input-feedrate" value="1.0" type="number" min="0.1" max="6.0">
                   <span class="input-group-addon">in/sec</span>
                 </div>
               </div>
@@ -103,7 +94,7 @@
               <label for="input-resolution" class="col-sm-6 control-label">Pass Depth</label>
               <div class="col-sm-6">
                 <div class="input-group">
-                  <input class="form-control num-input" id="input-pass_depth" value="0.125">
+                  <input class="form-control num-input noupdate" id="input-pass_depth" value="0.125" type="number" min="0.001" max="10.0">
                   <span class="input-group-addon">in/pass</span>
                 </div>
               </div>
@@ -113,7 +104,7 @@
               <label for="input-resolution" class="col-sm-6 control-label">Safe Z Pullup</label>
               <div class="col-sm-6">
                 <div class="input-group">
-                  <input class="form-control num-input" id="input-zpullup" value="0.25">
+                  <input class="form-control num-input noupdate" id="input-zpullup" value="0.25" type="number" min="0.0" max="10.0">
                   <span class="input-group-addon">in</span>
                 </div>
               </div>
@@ -126,7 +117,7 @@
     <!-- Dependencies -->
     <script src="js/three.min.js"></script> 
     <script src="js/perlin.js"></script> 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/terrain.js"></script>
     <script src="js/dashboard.js"></script>
@@ -148,7 +139,7 @@
 
         update();
 
-        $('#form-params').change(function(evt) {
+        $('.update').change(function(evt) {
           update();
         });
 
@@ -174,7 +165,7 @@
           var options = getOptions();
           terrain.options(options);
           var gcode = terrain.generateGCode();
-          var size = parseInt(options.width) + 'x' + parseInt(options.height) + 'x' + options.material_thickness.toFixed(3);
+          var size = parseInt(options.width) + 'x' + parseInt(options.height) + 'x' + options.cut_depth.toFixed(3);
           fabmoDashboard.submitJob(gcode, { filename : 'terrain_' + size + '.nc', 
                                             name : 'Terrain ' + size,
                                             description : size + ' terrain by Terrainman'
