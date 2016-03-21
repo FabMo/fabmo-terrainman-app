@@ -120,9 +120,10 @@
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/terrain.js"></script>
-    <script src="js/dashboard.js"></script>
+    <script src="js/fabmo.js"></script>
 
     <script> 
+        var fabmo = new FabMoDashboard();
         var container = $('#viewport');
         var element = null;
         var zrot = 0.0;
@@ -169,10 +170,12 @@
           terrain.options(options);
           var gcode = terrain.generateGCode(seed);
           var size = parseInt(options.width) + 'x' + parseInt(options.height) + 'x' + options.cut_depth.toFixed(3);
-          fabmoDashboard.submitJob(gcode, { filename : 'terrain_' + size + '.nc', 
-                                            name : 'Terrain ' + size,
-                                            description : size + ' terrain by Terrainman'
-                                          });
+          fabmo.submitJob({
+            file:gcode,
+            filename : 'terrain_' + size + '.nc',
+            name : 'Terrain ' + size,
+            description : size + ' terrain by Terrainman'
+          });
         }
 
         function update() {
