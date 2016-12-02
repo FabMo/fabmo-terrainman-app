@@ -1,9 +1,11 @@
 {
   "name": "TerrainMan",
+  "repository" : "https://github.com/FabMo/fabmo-terrainman-app.git",
+  "license" : "MIT",
   "main": "./index.html",
   "icon": "icon.png",
   "icon_color": "black",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "author": "Ryan Sturmer",
   "website": "http://www.shopbottools.com",
   "description": "Cut auto-generated terrain surfaces",
